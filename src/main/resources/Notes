@@ -1,0 +1,68 @@
+H2 Db is used to access db: http://localhost:8080/h2-console/
+--------------------------------------------------------------
+To run the project 
+
+ - To run http://localhost:8080/users/dummy/todos -- you will get 401
+ - before this run POST: "http://localhost:8080/authenticate"
+ 	Request:
+ 	{
+	    "username" : "dummy",
+	    "password" : "dummy"
+    }
+    
+    Response: 200 ok
+    {
+    "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkdW1teSIsImV4cCI6MTYyMDMwMTA2MSwiaWF0IjoxNjE5Njk2MjYxfQ.HYaoKtwlRCsMFmwL_BkXoeNFozm5k3AxYJg2tP9rg-OY1gcs7tdiQyeMp9SZu8DtZBNzFuie1XqmMvvRWDA5gQ"
+	}
+	put this token in jwt.io and add mySecrete in secrete key
+	
+- Without token if you run  http://localhost:8080/users/dummy/todos then it will get 401 status
+  Add header : Authorization = Bearer <Token> and you will get response.
+  
+ - To refresh the JWT token
+   GET:http://localhost:8080/refresh
+   Header: Authorization = Bearer <Token> and you will get new JWT in response.
+   
+- To add new users :
+
+  1. create Bcrypt password from BCryptEncoderTest
+  2. add value in JwtInMemoryUserDetailsService 
+  3. run POST: "http://localhost:8080/authenticate"
+  4. it will generate new token
+  
+ - To connect ui to java jwt
+ 
+ 1.   executeJwtAuthenticationService(username, password) {
+	    return axios.post(`${API_URL}/authenticate`, {
+	      username,
+	      password,
+	    });
+  	  }
+  	  
+2. 
+	loginClicked(event) {
+  	AuthenticationService.executeJwtAuthenticationService(
+      this.state.username,
+      this.state.password
+    )
+      .then((response) => {
+        console.log(response.data.token);
+        AuthenticationService.registerSuccessfulLoginForJwt(
+          this.state.username,
+          response.data.token  /*No need to write password */
+        );
+        this.props.history.push(`/welcome/${this.state.username}`);
+      })
+      .catch(() => {
+        this.setState({ showSuccessMessage: false });
+        this.setState({ hasLoginFailed: true });
+      });
+     }
+
+ 3.   
+ 	egisterSuccessfulLoginForJwt(username, token) {
+    sessionStorage.setItem(USER_NAME_SESSION_ATTRIBUTE_NAME, username);
+
+    //to send request after login need to write interceptors
+    this.setupAxiosInterceptors(this.createJwtToken(token));
+  }
